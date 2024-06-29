@@ -1,3 +1,8 @@
-# tree command
+# Tree command clone
 
-![](./snapchat/1.png)
+
+## Run 
+```
+go build
+./gtree -h
+```
