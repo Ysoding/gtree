@@ -50,6 +50,10 @@ func sortEntryByName(entries []fs.DirEntry) []fs.DirEntry {
 	return entries
 }
 
+func isIgnoreName(name string) bool {
+	return name[0] == '.'
+}
+
 func printTree(dirPath string, level int, prefix string) {
 	indent := strings.Repeat(" ", level*3)
 	if level > 0 {
@@ -74,7 +78,7 @@ func printTree(dirPath string, level int, prefix string) {
 		entryPath := filepath.Join(dirPath, entry.Name())
 		isDir := entry.IsDir()
 		fi, err := entry.Info()
-		if err != nil {
+		if err != nil || isIgnoreName(fi.Name()) {
 			continue
 		}
 
@@ -94,6 +98,7 @@ func printTree(dirPath string, level int, prefix string) {
 		}
 
 		if isDir {
+			directoryCnt++
 			fmt.Println(prefix + "─ ─ " + entryStr)
 			if isLast {
 				printTree(entryPath, level+1, tmpPrefix[:len(prefix)-1])
@@ -101,8 +106,8 @@ func printTree(dirPath string, level int, prefix string) {
 				printTree(entryPath, level+1, tmpPrefix)
 			}
 		} else {
-
 			fmt.Println(prefix + "─ ─ " + entryStr)
+			fileCnt++
 		}
 	}
 }
