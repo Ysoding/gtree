@@ -3,11 +3,14 @@ package internal
 import (
 	"fmt"
 	"io/fs"
+	"math/rand"
 	"os"
 	"path/filepath"
 	"sort"
 	"strings"
+	"time"
 
+	"github.com/fatih/color"
 	"github.com/spf13/cobra"
 )
 
@@ -99,15 +102,44 @@ func printTree(dirPath string, level int, prefix string) {
 
 		if isDir {
 			directoryCnt++
-			fmt.Println(prefix + "─ ─ " + entryStr)
+			randomColorPrintln(prefix + "─ ─ " + entryStr)
 			if isLast {
 				printTree(entryPath, level+1, tmpPrefix[:len(prefix)-1])
 			} else {
 				printTree(entryPath, level+1, tmpPrefix)
 			}
 		} else {
-			fmt.Println(prefix + "─ ─ " + entryStr)
+			randomColorPrintln(prefix + "─ ─ " + entryStr)
 			fileCnt++
 		}
+	}
+}
+
+func randomColorPrintln(a ...any) {
+	r := rand.New(rand.NewSource(time.Now().UnixNano()))
+
+	// Generate a random number between 0 and 99
+	randomNumber := r.Intn(100)
+
+	if randomNumber < 80 {
+		color.Unset()
+		fmt.Println(a...)
+	} else {
+		randomNumber = r.Intn(5)
+
+		var c *color.Color
+		switch randomNumber {
+		case 0:
+			c = color.New(color.FgRed)
+		case 1:
+			c = color.New(color.FgBlue)
+		case 2:
+			c = color.New(color.FgGreen)
+		case 3:
+			c = color.New(color.FgYellow)
+		case 4:
+			c = color.New(color.FgMagenta)
+		}
+		c.Println(a...)
 	}
 }
