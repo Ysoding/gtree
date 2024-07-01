@@ -14,8 +14,22 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var directoryCnt = 0
-var fileCnt = 0
+type Counter struct {
+	dirs  int
+	files int
+}
+
+func (c *Counter) count(isDir bool) {
+	if isDir {
+		c.dirs++
+	} else {
+		c.files++
+	}
+}
+
+func (c Counter) String() string {
+	return fmt.Sprintf("\n%d directories, %d files\n", c.dirs, c.files)
+}
 
 func Run(cmd *cobra.Command, args []string) {
 	var targetPath string
@@ -26,9 +40,10 @@ func Run(cmd *cobra.Command, args []string) {
 		targetPath = os.Args[1]
 	}
 
+	counter := new(Counter)
 	info, err := os.Stat(targetPath)
 
-	defer printCountInfo()
+	defer fmt.Print(counter)
 
 	if err != nil || !info.IsDir() {
 		if os.IsNotExist(err) {
@@ -39,11 +54,7 @@ func Run(cmd *cobra.Command, args []string) {
 		return
 	}
 
-	printTree(targetPath, 0, "|")
-}
-
-func printCountInfo() {
-	fmt.Printf("\n%d directories, %d files\n", directoryCnt, fileCnt)
+	printTree(counter, targetPath, 0, "|")
 }
 
 func sortEntryByName(entries []fs.DirEntry) []fs.DirEntry {
@@ -57,7 +68,7 @@ func isIgnoreName(name string) bool {
 	return name[0] == '.'
 }
 
-func printTree(dirPath string, level int, prefix string) {
+func printTree(counter *Counter, dirPath string, level int, prefix string) {
 	indent := strings.Repeat(" ", level*3)
 	if level > 0 {
 		prefix = prefix + indent + "|"
@@ -100,17 +111,17 @@ func printTree(dirPath string, level int, prefix string) {
 			prefix = prefix[:len(prefix)-1] + "`"
 		}
 
+		counter.count(isDir)
+
 		if isDir {
-			directoryCnt++
 			randomColorPrintln(prefix + "─ ─ " + entryStr)
 			if isLast {
-				printTree(entryPath, level+1, tmpPrefix[:len(prefix)-1])
+				printTree(counter, entryPath, level+1, tmpPrefix[:len(prefix)-1])
 			} else {
-				printTree(entryPath, level+1, tmpPrefix)
+				printTree(counter, entryPath, level+1, tmpPrefix)
 			}
 		} else {
 			randomColorPrintln(prefix + "─ ─ " + entryStr)
-			fileCnt++
 		}
 	}
 }
