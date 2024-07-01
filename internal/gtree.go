@@ -129,7 +129,6 @@ func printTree(counter *Counter, dirPath string, level int, prefix string) {
 func randomColorPrintln(a ...any) {
 	r := rand.New(rand.NewSource(time.Now().UnixNano()))
 
-	// Generate a random number between 0 and 99
 	randomNumber := r.Intn(100)
 
 	if randomNumber < 80 {
