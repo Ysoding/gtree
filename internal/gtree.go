@@ -7,7 +7,6 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
-	"strings"
 	"time"
 
 	"github.com/fatih/color"
@@ -54,7 +53,8 @@ func Run(cmd *cobra.Command, args []string) {
 		return
 	}
 
-	printTree(counter, targetPath, 0, "|")
+	fmt.Println(targetPath)
+	printTree(counter, targetPath, "")
 }
 
 func sortEntryByName(entries []fs.DirEntry) []fs.DirEntry {
@@ -68,22 +68,11 @@ func isIgnoreName(name string) bool {
 	return name[0] == '.'
 }
 
-func printTree(counter *Counter, dirPath string, level int, prefix string) {
-	indent := strings.Repeat(" ", level*3)
-	if level > 0 {
-		prefix = prefix + indent + "|"
-	}
-
-	tmpPrefix := prefix
-
+func printTree(counter *Counter, dirPath string, prefix string) {
 	entries, err := os.ReadDir(dirPath)
 	if err != nil {
-		fmt.Println(prefix + "─ ─ " + dirPath + " (Permission denied)")
+		fmt.Println(prefix + dirPath + " (Permission denied)")
 		return
-	}
-
-	if level == 0 {
-		fmt.Println(dirPath)
 	}
 
 	entries = sortEntryByName(entries)
@@ -91,14 +80,17 @@ func printTree(counter *Counter, dirPath string, level int, prefix string) {
 	for i, entry := range entries {
 		entryPath := filepath.Join(dirPath, entry.Name())
 		isDir := entry.IsDir()
+
 		fi, err := entry.Info()
 		if err != nil || isIgnoreName(fi.Name()) {
 			continue
 		}
 
+		counter.count(isDir)
 		isLink := fi.Mode()&os.ModeSymlink != 0
 
 		var entryStr string
+
 		if isLink {
 			target, _ := os.Readlink(entryPath)
 			entryStr = fmt.Sprintf("%s -> %s", entry.Name(), target)
@@ -107,21 +99,21 @@ func printTree(counter *Counter, dirPath string, level int, prefix string) {
 		}
 
 		isLast := i == len(entries)-1
-		if isLast { // last element
-			prefix = prefix[:len(prefix)-1] + "`"
+
+		if isLast {
+			fmt.Print(prefix + "└── ")
+		} else {
+			fmt.Print(prefix + "├── ")
 		}
 
-		counter.count(isDir)
+		randomColorPrintln(entryStr)
 
 		if isDir {
-			randomColorPrintln(prefix + "─ ─ " + entryStr)
 			if isLast {
-				printTree(counter, entryPath, level+1, tmpPrefix[:len(prefix)-1])
+				printTree(counter, entryPath, prefix+"    ")
 			} else {
-				printTree(counter, entryPath, level+1, tmpPrefix)
+				printTree(counter, entryPath, prefix+"│   ")
 			}
-		} else {
-			randomColorPrintln(prefix + "─ ─ " + entryStr)
 		}
 	}
 }
