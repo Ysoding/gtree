@@ -3,11 +3,9 @@ package internal
 import (
 	"fmt"
 	"io/fs"
-	"math/rand"
 	"os"
 	"path/filepath"
 	"sort"
-	"time"
 
 	"github.com/fatih/color"
 	"github.com/spf13/cobra"
@@ -71,7 +69,7 @@ func isIgnoreName(name string) bool {
 func printTree(counter *Counter, dirPath string, prefix string) {
 	entries, err := os.ReadDir(dirPath)
 	if err != nil {
-		fmt.Println(prefix + dirPath + " (Permission denied)")
+		colorPrintln(true, false, prefix+dirPath+" (Permission denied)")
 		return
 	}
 
@@ -106,7 +104,10 @@ func printTree(counter *Counter, dirPath string, prefix string) {
 			fmt.Print(prefix + "├── ")
 		}
 
-		randomColorPrintln(entryStr)
+		fs, _ := entry.Info()
+		isExecutable := fs.Mode().IsRegular() && fs.Mode()&0111 != 0
+
+		colorPrintln(isDir, isExecutable, entryStr)
 
 		if isDir {
 			if isLast {
@@ -118,30 +119,16 @@ func printTree(counter *Counter, dirPath string, prefix string) {
 	}
 }
 
-func randomColorPrintln(a ...any) {
-	r := rand.New(rand.NewSource(time.Now().UnixNano()))
-
-	randomNumber := r.Intn(100)
-
-	if randomNumber < 80 {
+func colorPrintln(isDir, isExecutable bool, a ...any) {
+	var c *color.Color
+	if isDir {
+		c = color.New(color.FgBlue)
+	} else if isExecutable {
+		c = color.New(color.FgGreen)
+	} else {
 		color.Unset()
 		fmt.Println(a...)
-	} else {
-		randomNumber = r.Intn(5)
-
-		var c *color.Color
-		switch randomNumber {
-		case 0:
-			c = color.New(color.FgRed)
-		case 1:
-			c = color.New(color.FgBlue)
-		case 2:
-			c = color.New(color.FgGreen)
-		case 3:
-			c = color.New(color.FgYellow)
-		case 4:
-			c = color.New(color.FgMagenta)
-		}
-		c.Println(a...)
+		return
 	}
+	c.Println(a...)
 }
